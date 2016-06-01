@@ -36,6 +36,13 @@ int main(int argc, char const *argv[]) {
         h_B[i] = size - i;
     }
 
+    cudaEvent_t start, stop;
+    float elapsedTime = 0.0;
+
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start, 0);
+
     cudaMalloc(&d_A, size * sizeof(int));
     cudaMalloc(&d_B, size * sizeof(int));
     cudaMalloc(&d_C, size * sizeof(int));
@@ -48,6 +55,16 @@ int main(int argc, char const *argv[]) {
     gridsize.x = (size + blocksize.x - 1) / blocksize.x;
 
     vectorAddKer<<<gridsize, blocksize>>>(d_A, d_B, d_C, size);
+
+    cudaEventRecord(stop, 0);
+    cudaEventSynchronize(stop);
+
+    cudaEventElapsedTime(&elapsedTime, start, stop);
+
+    cout << "time=" << elapsedTime << endl;
+
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
 
     cudaMemcpy(h_C, d_C, size * sizeof(int), cudaMemcpyDeviceToHost);
 
